@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext.jsx'
+import ThemePreviewCard from '../components/ThemePreviewCard.jsx'
 
 export default function Settings() {
-  const { theme, toggleTheme, updateSettings, updateNotificationSettings, notificationSettings, settings } = useAppContext()
+  const {
+    currentTheme,
+    themePresets,
+    setThemePreference,
+    toggleTheme,
+    updateSettings,
+    updateNotificationSettings,
+    notificationSettings,
+    settings,
+  } = useAppContext()
   const [form, setForm] = useState(settings)
 
   const handleSubmit = (event) => {
@@ -21,34 +31,56 @@ export default function Settings() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
+      <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-glass">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-slate-400">App settings</p>
-            <h1 className="mt-3 text-3xl font-semibold text-white">Ambient controls</h1>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Visual settings</p>
+            <h1 className="mt-3 text-4xl font-semibold text-white">Theme and ecosystem controls</h1>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
+              Switch instant themes, update health goals, and tune the AI-powered experience around your preferences.
+            </p>
           </div>
           <button
             type="button"
             onClick={toggleTheme}
-            className="rounded-3xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+            className="rounded-[24px] border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Switch to {theme === 'dark' ? 'Light' : 'Dark'} mode
+            Cycle theme: {currentTheme.name}
           </button>
         </div>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-          Configure your goals, personalize your experience, and keep the app aligned with your premium wellness routine.
-        </p>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Safe navigation</p>
+      <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-glass">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Theme system</p>
+            <h2 className="mt-3 text-2xl font-semibold text-white">Choose your premium visual mode</h2>
+          </div>
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+            Instant switch
+          </span>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {themePresets.map((theme) => (
+            <ThemePreviewCard
+              key={theme.key}
+              theme={theme}
+              active={theme.key === currentTheme.key}
+              onSelect={setThemePreference}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+        <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-glass">
+          <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Smart controls</p>
           <div className="mt-6 space-y-4">
-            <div className="rounded-3xl bg-slate-950/75 p-4">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
               <p className="text-sm text-slate-400">Privacy</p>
-              <p className="mt-3 text-sm leading-6 text-slate-200">Your meal data stays local and encrypted within the browser. No external tracking.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-200">Your meal data stays local inside the browser. No external tracking and no cloud sync assumptions.</p>
             </div>
-            <div className="rounded-3xl bg-slate-950/75 p-4">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4">
               <p className="text-sm text-slate-400">Notifications</p>
               <div className="mt-3 space-y-3">
                 {Object.entries(notificationSettings).map(([key, value]) => (
@@ -56,7 +88,7 @@ export default function Settings() {
                     type="button"
                     key={key}
                     onClick={() => toggleNotification(key)}
-                    className={`w-full rounded-3xl border px-4 py-3 text-left text-sm transition ${
+                    className={`w-full rounded-[22px] border px-4 py-3 text-left text-sm transition ${
                       value ? 'border-cyan-500 bg-cyan-500/10 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:border-cyan-400'
                     }`}
                   >
@@ -71,8 +103,9 @@ export default function Settings() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
-          <div className="grid gap-4 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-glass">
+          <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Goal settings</p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
               { label: 'Daily calorie goal', key: 'calorieGoal' },
               { label: 'Protein goal (g)', key: 'proteinGoal' },
@@ -86,14 +119,14 @@ export default function Settings() {
                   min="0"
                   value={form[field.key]}
                   onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  className="w-full rounded-3xl border border-white/10 bg-slate-950/75 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="w-full rounded-[24px] border border-white/10 bg-slate-950/75 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
                 />
               </label>
             ))}
           </div>
           <button
             type="submit"
-            className="mt-6 inline-flex items-center justify-center rounded-3xl bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-400"
+            className="mt-6 inline-flex items-center justify-center rounded-[24px] bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
           >
             Save settings
           </button>

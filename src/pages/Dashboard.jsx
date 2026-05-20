@@ -1,147 +1,316 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ResponsiveContainer, Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis, Line, LineChart } from 'recharts'
 import { useAppContext } from '../context/AppContext.jsx'
-import MacroRing from '../components/MacroRing.jsx'
-import ProgressCircle from '../components/ProgressCircle.jsx'
-import WaterTracker from '../components/WaterTracker.jsx'
 import StatCard from '../components/StatCard.jsx'
+import ProgressCircle from '../components/ProgressCircle.jsx'
 import FoodSearchBar from '../components/FoodSearchBar.jsx'
 import FoodDetailsModal from '../components/FoodDetailsModal.jsx'
+import HealthScoreCard from '../components/HealthScoreCard.jsx'
+import AchievementCard from '../components/AchievementCard.jsx'
+import AIInsightsPanel from '../components/AIInsightsPanel.jsx'
+import DailyChallengesPanel from '../components/DailyChallengesPanel.jsx'
+
+const cardClass = 'rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.92))] p-6 shadow-glass'
+
+function DashboardTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-slate-950/95 px-4 py-3 shadow-2xl">
+      <p className="text-sm font-semibold text-white">{label}</p>
+      {payload.map((entry) => (
+        <p key={entry.dataKey} className="mt-2 text-sm text-slate-300">
+          {entry.name}: <span className="font-semibold text-white">{Math.round(entry.value)}</span>
+        </p>
+      ))}
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const {
     dailyNutrition,
-    settings,
     totalCalories,
     caloriesRemaining,
     completion,
     dailyMeals,
     weeklySummary,
-    recommendations,
-    waterIntake,
-    updateWaterIntake,
     addFoodToMeal,
+    dailyHealth,
+    gamification,
+    nutritionRings,
+    nutritionQualityIndex,
+    waterIntake,
+    macroTargets,
+    aiInsights,
+    dailyChallenges,
+    personalizedGreeting,
+    micronutrientCards,
+    currentTheme,
+    weeklyHealthTimeline,
+    healthTrendDelta,
   } = useAppContext()
   const [previewFood, setPreviewFood] = useState(null)
 
-  const chartData = useMemo(
-    () => weeklySummary.map((item) => ({ day: item.day, calories: item.calories })),
-    [weeklySummary],
+  const energyChartData = useMemo(
+    () =>
+      weeklySummary.map((item, index) => ({
+        day: item.day,
+        calories: item.calories,
+        protein: item.protein,
+        healthScore: weeklyHealthTimeline[index]?.healthScore || 0,
+      })),
+    [weeklySummary, weeklyHealthTimeline],
   )
+
+  const topMicronutrients = micronutrientCards.slice(0, 6)
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Daily Dashboard</p>
-              <h1 className="mt-3 text-4xl font-semibold text-white">Performance overview</h1>
+      <section className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+        <div className="relative overflow-hidden rounded-[40px] border border-white/10 bg-[linear-gradient(145deg,rgba(15,23,42,0.96),rgba(2,6,23,0.92))] p-6 shadow-glass">
+          <div
+            className="absolute inset-0 opacity-80"
+            style={{
+              background: `radial-gradient(circle at 20% 22%, ${currentTheme.colors[0]}25, transparent 20%), radial-gradient(circle at 82% 18%, ${currentTheme.colors[1]}30, transparent 24%), radial-gradient(circle at 70% 82%, ${currentTheme.colors[2]}20, transparent 22%)`,
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0">
+            {[0, 1, 2, 3, 4].map((item) => (
+              <motion.span
+                key={item}
+                className="absolute h-2 w-2 rounded-full bg-white/60"
+                style={{ left: `${14 + item * 16}%`, top: `${18 + (item % 3) * 18}%` }}
+                animate={{ y: [0, -10, 0], opacity: [0.35, 0.9, 0.35] }}
+                transition={{ duration: 3.2 + item * 0.4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            ))}
+          </div>
+
+          <div className="relative">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+                AI-powered dashboard
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+                Health trend {healthTrendDelta >= 0 ? '+' : ''}{healthTrendDelta}
+              </span>
             </div>
-            <div className="rounded-3xl bg-white/5 px-4 py-3 text-sm text-slate-200">Designed for premium fitness tracking</div>
-          </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard title="Calories consumed" value={`${totalCalories} kcal`} accent="text-violet-100 bg-violet-500/20">
-              {completion}% complete
-            </StatCard>
-            <StatCard title="Remaining" value={`${caloriesRemaining} kcal`} accent="text-sky-100 bg-sky-500/15">
-              Goal {settings.calorieGoal} kcal
-            </StatCard>
-            <StatCard title="Protein" value={`${dailyNutrition.protein} g`} accent="text-cyan-100 bg-cyan-500/15">
-              Target {settings.proteinGoal} g
-            </StatCard>
-            <StatCard title="Meal logs" value={`${dailyMeals.length}`} accent="text-amber-100 bg-amber-500/15">
-              Today
-            </StatCard>
-          </div>
+            <h1 className="mt-6 max-w-3xl text-4xl font-semibold text-white md:text-5xl">
+              {personalizedGreeting.greeting}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
+              {personalizedGreeting.message} Your platform is tracking nutrients, recovery, streaks, and actions in one polished ecosystem.
+            </p>
 
-          <div className="mt-8 rounded-[32px] border border-white/10 bg-slate-950/75 p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Insight</p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">{recommendations.headline}</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-400">{recommendations.description}</p>
-              </div>
-              <div className="rounded-3xl bg-violet-500/15 px-4 py-3 text-sm text-violet-100">Macro balance</div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard title="Health score" value={dailyHealth.score} accent="bg-emerald-500/15 text-emerald-100">
+                {dailyHealth.grade}
+              </StatCard>
+              <StatCard title="Hydration" value={`${Math.round((waterIntake / Math.max(1, macroTargets.water)) * 100)}%`} accent="bg-cyan-500/15 text-cyan-100">
+                {waterIntake.toFixed(1)}L
+              </StatCard>
+              <StatCard title="Nutrition quality" value={nutritionQualityIndex.quality} accent="bg-violet-500/15 text-violet-100">
+                {nutritionQualityIndex.healthyRating}
+              </StatCard>
+              <StatCard title="XP level" value={gamification.level} accent="bg-amber-500/15 text-amber-100">
+                {gamification.xp} XP
+              </StatCard>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-5">
-          <ProgressCircle label="Calories" value={totalCalories} goal={settings.calorieGoal} accent="#8b5cf6" />
-          <ProgressCircle label="Protein" value={dailyNutrition.protein} goal={settings.proteinGoal} accent="#38bdf8" />
-          <WaterTracker waterIntake={waterIntake} goal={settings.waterGoal} onAddGlass={() => updateWaterIntake(0.25)} />
+        <HealthScoreCard health={dailyHealth} gamification={gamification} />
+      </section>
+
+      <section className={cardClass}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Personalized dashboard</p>
+            <h2 className="mt-3 text-3xl font-semibold text-white">Adaptive nutrition control surface</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">
+              Live widgets track your calories, macros, hydration, and goal progress with startup-grade polish and motion.
+            </p>
+          </div>
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            {dailyMeals.length} logs today / {caloriesRemaining} kcal remaining
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          {nutritionRings.map((ring) => (
+            <ProgressCircle
+              key={ring.key}
+              label={ring.label}
+              value={ring.value}
+              goal={ring.goal}
+              unit={ring.unit}
+              accent={ring.accent}
+              hint={ring.hint}
+              caption={`${Math.round(ring.value)} ${ring.unit} tracked`}
+              size={160}
+            />
+          ))}
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <AIInsightsPanel insights={aiInsights} />
+
+      <DailyChallengesPanel challenges={dailyChallenges} />
+
+      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
         <FoodSearchBar
           onAddFood={(food) => addFoodToMeal(food, 'Lunch')}
           onSelectFood={(food) => setPreviewFood(food)}
         />
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Nutrition insight</p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">Weekly activity</h2>
-          <p className="mt-4 text-sm leading-6 text-slate-400">Track the last seven days to stay ahead of your calorie and macro balance.</p>
 
-          <div className="mt-8 h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="rgba(148, 163, 184, 0.12)" vertical={false} />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
-                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px' }} />
-                <Line type="monotone" dataKey="calories" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="space-y-6">
+          <div className={cardClass}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Premium chart system</p>
+                <h2 className="mt-3 text-2xl font-semibold text-white">Weekly energy and health arc</h2>
+              </div>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+                Dual trend
+              </span>
+            </div>
+
+            <div className="mt-6 h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={energyChartData} margin={{ top: 0, right: 10, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="dashboardCalories" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={currentTheme.colors[1]} stopOpacity={0.42} />
+                      <stop offset="100%" stopColor={currentTheme.colors[1]} stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="rgba(148,163,184,0.12)" vertical={false} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                  <Tooltip content={<DashboardTooltip />} />
+                  <Area type="monotone" dataKey="calories" name="Calories" stroke={currentTheme.colors[1]} strokeWidth={3} fill="url(#dashboardCalories)" />
+                  <Line type="monotone" dataKey="healthScore" name="Health Score" stroke={currentTheme.colors[0]} strokeWidth={3} dot={{ r: 3 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className={cardClass}>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Recommended actions</p>
+            <div className="mt-5 grid gap-3">
+              {dailyHealth.recommendations.map((item) => (
+                <div key={item.title} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
+      <section className="grid gap-6 xl:grid-cols-[1fr_1.1fr]">
+        <div className={cardClass}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Meals today</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">Recent logs</h2>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Micronutrient tracking</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Advanced nutrient coverage</h2>
             </div>
-            <span className="rounded-3xl bg-white/5 px-3 py-2 text-sm text-slate-300">{dailyMeals.length} items</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+              11 nutrients
+            </span>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {topMicronutrients.map((item, index) => (
+              <motion.div
+                key={item.key}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.04, duration: 0.26 }}
+                className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-white">{item.label}</p>
+                  <span className="text-xs text-slate-400">{item.completion}%</span>
+                </div>
+                <p className="mt-3 text-xl font-semibold text-white">
+                  {item.value}
+                  <span className="ml-1 text-sm text-slate-400">{item.unit}</span>
+                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(item.completion, 100)}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500"
+                  />
+                </div>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-slate-500">Target {item.target} {item.unit}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className={cardClass}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Recent logs</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Today's food timeline</h2>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+              {dailyMeals.length} items
+            </span>
           </div>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-3">
             {dailyMeals.length > 0 ? (
-              dailyMeals.slice(0, 4).map((meal) => (
+              dailyMeals.slice(0, 6).map((meal) => (
                 <button
-                  key={meal.id}
+                  key={meal.id || `${meal.name}-${meal.serving}`}
                   type="button"
                   onClick={() => setPreviewFood(meal)}
-                  className="w-full rounded-3xl bg-slate-950/75 p-4 text-left transition hover:border-cyan-400 hover:border"
+                  className="w-full rounded-[26px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:border-cyan-400/40 hover:bg-white/[0.06]"
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-white">{meal.name}</p>
-                      <p className="mt-2 text-sm text-slate-400">{meal.foodCategory} • {meal.serving}</p>
+                      <p className="text-base font-semibold text-white">{meal.name}</p>
+                      <p className="mt-2 text-sm text-slate-400">{meal.foodCategory} / {meal.serving}</p>
                     </div>
-                    <div className="rounded-3xl bg-white/5 px-4 py-2 text-sm text-slate-200">{meal.calories} kcal</div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs text-violet-100">{meal.calories} kcal</span>
+                      <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">{meal.protein}g protein</span>
+                    </div>
                   </div>
                 </button>
               ))
             ) : (
-              <div className="rounded-[32px] border border-dashed border-white/10 bg-slate-950/60 p-10 text-center text-slate-400">
+              <div className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-10 text-center text-slate-400">
                 <p className="text-lg font-semibold text-white">No meals logged yet</p>
-                <p className="mt-3 text-sm">Add a food item from the search panel to start your day.</p>
+                <p className="mt-3 text-sm">Search a food and start building today's health score.</p>
               </div>
             )}
           </div>
         </div>
+      </section>
 
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Fuel metrics</p>
-          <div className="mt-6 grid gap-4">
-            <MacroRing protein={dailyNutrition.protein} carbs={dailyNutrition.carbs} fats={dailyNutrition.fats} />
-            <WaterTracker waterIntake={waterIntake} goal={settings.waterGoal} onAddGlass={() => updateWaterIntake(0.25)} />
+      <section className={cardClass}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Achievement vault</p>
+            <h2 className="mt-3 text-2xl font-semibold text-white">Unlocked momentum system</h2>
           </div>
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+            Level {gamification.level}
+          </span>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {gamification.achievements.map((achievement, index) => (
+            <AchievementCard key={achievement.id} achievement={achievement} delay={index * 0.04} />
+          ))}
         </div>
       </section>
 

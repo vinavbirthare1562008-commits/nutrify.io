@@ -1,48 +1,72 @@
-import { useEffect } from 'react'
-import { motion, useAnimation } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useId } from 'react'
 
-export default function ScoreRing({ value = 72, size = 136, stroke = 12, gradientId = 'scoreGrad', label = 'Health' }) {
-  const radius = (size - stroke) / 2
+export default function ScoreRing({
+  value = 72,
+  size = 136,
+  stroke = 12,
+  label = 'Health',
+  fromColor,
+  toColor,
+  subtitle = '/100',
+}) {
+  const gradientId = useId().replace(/:/g, '')
+  const radius = (size - stroke * 2) / 2
   const circumference = 2 * Math.PI * radius
-  const controls = useAnimation()
-
-  useEffect(() => {
-    controls.start({ strokeDashoffset: circumference * (1 - Math.min(100, value) / 100), transition: { duration: 1.2, ease: 'easeOut' } })
-  }, [value, circumference, controls])
-
-  const colorFrom = value > 80 ? '#06b6d4' : value > 60 ? '#60a5fa' : value > 40 ? '#f59e0b' : '#ef4444'
-  const colorTo = value > 80 ? '#7c3aed' : value > 60 ? '#a78bfa' : value > 40 ? '#fb923c' : '#f97316'
+  const safeValue = Math.max(0, Math.min(100, value))
+  const dashOffset = circumference * (1 - safeValue / 100)
+  const start = fromColor || (safeValue >= 78 ? '#22c55e' : safeValue >= 55 ? '#facc15' : '#fb7185')
+  const end = toColor || (safeValue >= 78 ? '#14b8a6' : safeValue >= 55 ? '#f97316' : '#ef4444')
 
   return (
-    <div style={{ width: size, height: size }} className="relative">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div className="relative" style={{ width: size, height: size }}>
+      <div
+        className="absolute inset-0 rounded-full blur-2xl"
+        style={{ background: `radial-gradient(circle, ${start}30 0%, transparent 68%)` }}
+      />
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
         <defs>
-          <linearGradient id={gradientId} x1="0%" x2="100%">
-            <stop offset="0%" stopColor={colorFrom} />
-            <stop offset="100%" stopColor={colorTo} />
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={start} />
+            <stop offset="100%" stopColor={end} />
           </linearGradient>
+          <filter id={`${gradientId}-glow`}>
+            <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        <g transform={`translate(${size / 2}, ${size / 2})`}>
-          <circle r={radius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={stroke} />
-          <motion.circle
-            r={radius}
-            fill="none"
-            stroke={`url(#${gradientId})`}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={controls}
-            style={{ rotate: -90 }}
-          />
-        </g>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(148,163,184,0.14)"
+          strokeWidth={stroke}
+        />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: dashOffset }}
+          transition={{ duration: 1.15, ease: 'easeOut' }}
+          filter={`url(#${gradientId}-glow)`}
+        />
       </svg>
 
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-xs text-slate-300 uppercase tracking-wider">{label}</div>
-        <div className="mt-1 text-3xl font-semibold text-white">{Math.round(value)}</div>
-        <div className="text-xs text-slate-400">/100</div>
+      <div className="absolute inset-[16%] flex flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/75 text-center backdrop-blur-md">
+        <div className="text-[10px] uppercase tracking-[0.34em] text-slate-500">{label}</div>
+        <div className="mt-1 text-4xl font-semibold text-white">{Math.round(safeValue)}</div>
+        <div className="text-xs text-slate-400">{subtitle}</div>
       </div>
     </div>
   )

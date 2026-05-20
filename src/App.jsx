@@ -11,6 +11,8 @@ import Settings from './pages/Settings.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import Navbar from './components/Navbar.jsx'
 import MobileNav from './components/MobileNav.jsx'
+import FloatingQuickActions from './components/FloatingQuickActions.jsx'
+import { useAppContext } from './context/AppContext.jsx'
 
 function ContentWrapper({ children }) {
   const location = useLocation()
@@ -32,8 +34,10 @@ function ContentWrapper({ children }) {
 }
 
 function AppShell() {
+  const { currentTheme } = useAppContext()
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen text-slate-100 transition-colors duration-500" style={{ background: currentTheme.background }}>
       <div className="absolute inset-0 bg-dashboard-glow opacity-60" />
       <div className="relative flex min-h-screen flex-col xl:flex-row">
         <Sidebar />
@@ -55,6 +59,7 @@ function AppShell() {
         </main>
       </div>
       <MobileNav />
+      <FloatingQuickActions />
     </div>
   )
 }
