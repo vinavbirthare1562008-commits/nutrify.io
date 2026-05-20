@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AppProvider } from './context/AppContext.jsx'
