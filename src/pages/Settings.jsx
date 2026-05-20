@@ -8,6 +8,9 @@ export default function Settings() {
     themePresets,
     setThemePreference,
     toggleTheme,
+    academyHouses,
+    selectedHouse,
+    selectHouse,
     updateSettings,
     updateNotificationSettings,
     notificationSettings,
@@ -35,9 +38,9 @@ export default function Settings() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Visual settings</p>
-            <h1 className="mt-3 text-4xl font-semibold text-white">Theme and ecosystem controls</h1>
+            <h1 className="mt-3 text-4xl font-semibold text-white">Theme and academy controls</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
-              Switch instant themes, update health goals, and tune the AI-powered experience around your preferences.
+              Switch instant themes, change your house allegiance, update health goals, and tune the magical academy around your preferences.
             </p>
           </div>
           <button
@@ -47,6 +50,38 @@ export default function Settings() {
           >
             Cycle theme: {currentTheme.name}
           </button>
+        </div>
+      </section>
+
+      <section className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-glass">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">House selection</p>
+            <h2 className="mt-3 text-2xl font-semibold text-white">Choose your academy allegiance</h2>
+          </div>
+          {selectedHouse ? (
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+              {selectedHouse.name}
+            </span>
+          ) : null}
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {academyHouses.map((house) => (
+            <button
+              key={house.key}
+              type="button"
+              onClick={() => selectHouse(house.key)}
+              className={`rounded-[24px] border p-4 text-left transition ${
+                selectedHouse?.key === house.key
+                  ? 'border-cyan-400/30 bg-cyan-400/8'
+                  : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.06]'
+              }`}
+            >
+              <div className="h-20 rounded-[18px]" style={{ background: house.banner }} />
+              <p className="mt-4 text-lg font-semibold text-white">{house.name}</p>
+              <p className="mt-2 text-sm text-slate-400">{house.values.join(' / ')}</p>
+            </button>
+          ))}
         </div>
       </section>
 

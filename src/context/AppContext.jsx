@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage.js'
 import foodDatabase from '../data/foodDatabase.js'
+import { academyHouses, magicalAchievementTitles, magicalMealLabels, magicalRanks } from '../data/magicalAcademy.js'
 import {
   MICRO_NUTRIENT_META,
   buildAIInsights,
@@ -120,12 +121,22 @@ function enrichMealRecord(meal, overrides = {}) {
   }
 }
 
+function getRankFromXp(xp) {
+  return [...magicalRanks].reverse().find((rank) => xp >= rank.minXp) || magicalRanks[0]
+}
+
+function getNextRank(xp) {
+  return magicalRanks.find((rank) => rank.minXp > xp) || magicalRanks[magicalRanks.length - 1]
+}
+
 export function AppProvider({ children }) {
   const [meals, setMeals] = useLocalStorage('nutrition-tracker-meals', [])
   const [personalMeals, setPersonalMeals] = useLocalStorage('nutrition-tracker-personal-meals', [])
   const [favoriteMealIds, setFavoriteMealIds] = useLocalStorage('nutrition-tracker-favorite-meals', [])
   const [settings, setSettings] = useLocalStorage('nutrition-tracker-settings', defaultSettings)
   const [storedTheme, setStoredTheme] = useLocalStorage('nutrition-tracker-theme', 'neon-dark')
+  const [selectedHouseKey, setSelectedHouseKey] = useLocalStorage('nutrify-magical-house', '')
+  const [lastSeenRankKey, setLastSeenRankKey] = useLocalStorage('nutrify-last-rank', 'muggle')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMealType, setSelectedMealType] = useState('All')
   const [selectedFoodGroup, setSelectedFoodGroup] = useState('All')
@@ -158,12 +169,23 @@ export function AppProvider({ children }) {
     activityLevel: 'moderate',
     fitnessGoal: 'weight loss',
   })
+  const [rewardFeed, setRewardFeed] = useState([])
+  const [levelUpEvent, setLevelUpEvent] = useState(null)
 
   const today = getTodayIso()
   const theme = normalizeTheme(storedTheme)
   const currentTheme = themePresets.find((item) => item.key === theme) || themePresets[0]
+  const selectedHouse = academyHouses.find((house) => house.key === selectedHouseKey) || null
   const mealTypes = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snacks']
   const foodGroups = ['All', 'Fruits', 'Vegetables', 'Fast Food', 'Indian Food', 'Drinks', 'Snacks', 'Dairy', 'Protein Foods', 'Rice & Grains', 'Breakfast Foods']
+
+  const pushReward = (reward) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    setRewardFeed((current) => [...current, { id, ...reward }].slice(-6))
+    window.setTimeout(() => {
+      setRewardFeed((current) => current.filter((item) => item.id !== id))
+    }, 2800)
+  }
 
   const dailyMeals = useMemo(
     () => meals.filter((meal) => meal.date === today),
@@ -278,6 +300,28 @@ export function AppProvider({ children }) {
     [meals, waterHistory, settings, monthlyProgress, dailyHealth.score, nutritionQualityIndex.quality],
   )
 
+  const magicalGamification = useMemo(() => {
+    const rank = getRankFromXp(gamification.xp)
+    const nextRank = getNextRank(gamification.xp)
+    const previousThreshold = rank.minXp
+    const thresholdSpan = Math.max(1, nextRank.minXp - previousThreshold)
+    const rankProgress = rank.key === nextRank.key
+      ? 100
+      : clamp(Math.round(((gamification.xp - previousThreshold) / thresholdSpan) * 100), 0, 100)
+
+    return {
+      ...gamification,
+      rank,
+      nextRank,
+      rankProgress,
+      achievements: gamification.achievements.map((achievement) => ({
+        ...achievement,
+        title: magicalAchievementTitles[achievement.title] || achievement.title,
+        academyTitle: achievement.title,
+      })),
+    }
+  }, [gamification])
+
   const personalizedGreeting = useMemo(() => getTimeBasedGreeting(healthProfile.name), [healthProfile.name])
 
   const weeklyHealthTimeline = useMemo(
@@ -333,6 +377,34 @@ export function AppProvider({ children }) {
         gamification,
       }),
     [today, dailyNutrition, waterIntake, settings, detailedDailyMeals, gamification],
+  )
+
+  const enchantedChallenges = useMemo(
+    () =>
+      dailyChallenges.map((challenge) => ({
+        ...challenge,
+        title:
+          challenge.title === 'Hydration Hero'
+            ? 'Hydration Charm'
+            : challenge.title === 'Calorie Precision'
+              ? 'Cauldron Balance'
+              : challenge.title === 'Protein Goal'
+                ? 'Strength Elixir'
+                : challenge.title === 'Carb Balance'
+                  ? 'Rune Carbo Balance'
+                  : 'Academy Attendance',
+      })),
+    [dailyChallenges],
+  )
+
+  const dailyXpEarned = useMemo(
+    () => enchantedChallenges.reduce((sum, challenge) => sum + (challenge.completed ? challenge.reward : 0), 0),
+    [enchantedChallenges],
+  )
+
+  const streakBonusXp = useMemo(
+    () => enchantedChallenges.reduce((sum, challenge) => sum + (challenge.streakBonus || 0), 0),
+    [enchantedChallenges],
   )
 
   const favoriteFoodItems = useMemo(
@@ -475,6 +547,13 @@ export function AppProvider({ children }) {
 
     setMeals((current) => [newMeal, ...current])
     setRecentFoods((current) => [newMeal.name, ...current.filter((item) => item !== newMeal.name)].slice(0, 8))
+    pushReward({
+      title: 'Potion logged',
+      detail: `${newMeal.name} brewed into your journal`,
+      xp: 18,
+      tone: selectedHouse?.colors?.[0] || currentTheme.colors[0],
+      glyph: '✦',
+    })
   }
 
   const addPersonalMeal = (meal) => {
@@ -575,6 +654,13 @@ export function AppProvider({ children }) {
         const updated = history.filter((item) => item.date !== today)
         return [{ date: today, intake: next }, ...updated].slice(0, 30)
       })
+      pushReward({
+        title: 'Hydration charm',
+        detail: `+${Math.round(value * 1000)}ml restored`,
+        xp: value >= 1 ? 18 : 8,
+        tone: selectedHouse?.colors?.[1] || currentTheme.colors[1],
+        glyph: '✧',
+      })
       return next
     })
   }
@@ -583,10 +669,35 @@ export function AppProvider({ children }) {
     const numericWeight = Number(entry.weight)
     setWeightLogs((current) => [{ date: entry.date, weight: numericWeight }, ...current.filter((item) => item.date !== entry.date)])
     updateHealthProfile({ currentWeight: numericWeight, startWeight: healthProfile.startWeight || healthProfile.currentWeight })
+    pushReward({
+      title: 'Transformation mark',
+      detail: `${numericWeight} kg logged to your codex`,
+      xp: 16,
+      tone: selectedHouse?.colors?.[2] || currentTheme.colors[2],
+      glyph: '✶',
+    })
   }
 
   const setThemePreference = (nextTheme) => {
     setStoredTheme(normalizeTheme(nextTheme))
+  }
+
+  const selectHouse = (houseKey) => {
+    const house = academyHouses.find((item) => item.key === houseKey)
+    if (!house) return
+    setSelectedHouseKey(house.key)
+    setStoredTheme(house.theme)
+    pushReward({
+      title: `${house.name} chosen`,
+      detail: `${house.emblem} awakened in your academy profile`,
+      xp: 40,
+      tone: house.colors[0],
+      glyph: '✵',
+    })
+  }
+
+  const dismissLevelUpEvent = () => {
+    setLevelUpEvent(null)
   }
 
   const toggleTheme = () => {
@@ -608,6 +719,25 @@ export function AppProvider({ children }) {
     }
   }, [currentTheme])
 
+  useEffect(() => {
+    if (magicalGamification.rank.key !== lastSeenRankKey) {
+      setLastSeenRankKey(magicalGamification.rank.key)
+      setLevelUpEvent({
+        rank: magicalGamification.rank,
+        nextRank: magicalGamification.nextRank,
+        xp: magicalGamification.xp,
+        house: selectedHouse,
+      })
+      pushReward({
+        title: 'Rank ascended',
+        detail: `${magicalGamification.rank.label} achieved`,
+        xp: 60,
+        tone: selectedHouse?.colors?.[0] || currentTheme.colors[0],
+        glyph: magicalGamification.rank.glyph,
+      })
+    }
+  }, [magicalGamification.rank, magicalGamification.nextRank, magicalGamification.xp, lastSeenRankKey, selectedHouse, currentTheme.colors, setLastSeenRankKey])
+
   const recommendations = useMemo(() => {
     const primary = dailyHealth.recommendations[0]
     return {
@@ -615,6 +745,11 @@ export function AppProvider({ children }) {
       description: primary?.detail || dailyHealth.feedback,
     }
   }, [dailyHealth])
+
+  const magicalMealTypes = useMemo(
+    () => mealTypes.map((type) => ({ key: type, label: magicalMealLabels[type] || type })),
+    [mealTypes],
+  )
 
   return (
     <AppContext.Provider
@@ -626,6 +761,9 @@ export function AppProvider({ children }) {
         theme,
         themePresets,
         currentTheme,
+        academyHouses,
+        selectedHouse,
+        magicalRanks,
         searchQuery,
         selectedMealType,
         selectedFoodGroup,
@@ -635,6 +773,7 @@ export function AppProvider({ children }) {
         recentFoods,
         foodDatabase,
         mealTypes,
+        magicalMealTypes,
         foodGroups,
         recentSearches,
         healthProfile,
@@ -666,7 +805,9 @@ export function AppProvider({ children }) {
         micronutrients,
         micronutrientCards,
         aiInsights,
-        dailyChallenges,
+        dailyChallenges: enchantedChallenges,
+        dailyXpEarned,
+        streakBonusXp,
         notificationSettings,
         filteredMeals,
         filteredPersonalMeals,
@@ -677,7 +818,9 @@ export function AppProvider({ children }) {
         waterHistory,
         weightLogs,
         dailyHealth,
-        gamification,
+        gamification: magicalGamification,
+        rewardFeed,
+        levelUpEvent,
         nutritionRings,
         macroTargets,
         addMeal,
@@ -700,6 +843,8 @@ export function AppProvider({ children }) {
         addWeightEntry,
         toggleTheme,
         setThemePreference,
+        selectHouse,
+        dismissLevelUpEvent,
         setSearchQuery,
         setSelectedMealType,
         setSelectedFoodGroup,

@@ -12,7 +12,7 @@ export default function AchievementCard({ achievement, delay = 0 }) {
       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${achievement.accent}`} />
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Achievement</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Arcane Achievement</p>
           <h3 className="mt-3 text-lg font-semibold text-white">{achievement.title}</h3>
           <p className="mt-2 text-sm leading-6 text-slate-400">{achievement.description}</p>
         </div>
@@ -29,6 +29,9 @@ export default function AchievementCard({ achievement, delay = 0 }) {
         />
       </div>
       <p className="mt-3 text-sm text-slate-300">{achievement.completion}% complete</p>
+      {achievement.academyTitle ? (
+        <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-500">Classic title: {achievement.academyTitle}</p>
+      ) : null}
     </motion.div>
   )
 }

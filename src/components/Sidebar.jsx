@@ -4,21 +4,24 @@ import { motion } from 'framer-motion'
 import { useAppContext } from '../context/AppContext.jsx'
 
 const navItems = [
-  { path: '/', label: 'Dashboard', iconType: 'home' },
-  { path: '/my-meals', label: 'My Meals', iconType: 'meal' },
-  { path: '/analytics', label: 'Analytics', iconType: 'analytics' },
-  { path: '/hydrations', label: 'Hydrations', iconType: 'water' },
-  { path: '/performance', label: 'Performance', iconType: 'pulse' },
+  { path: '/', label: 'Great Hall', iconType: 'home' },
+  { path: '/my-meals', label: 'Potion Ledger', iconType: 'meal' },
+  { path: '/analytics', label: 'Rune Analytics', iconType: 'analytics' },
+  { path: '/hydrations', label: 'Hydration Charms', iconType: 'water' },
+  { path: '/performance', label: 'Alchemy Tower', iconType: 'pulse' },
 ]
 
 const secondaryItems = [
-  { path: '/profile', label: 'Profile', iconType: 'profile' },
-  { path: '/settings', label: 'Settings', iconType: 'settings' },
+  { path: '/profile', label: 'Wizard Profile', iconType: 'profile' },
+  { path: '/settings', label: 'Enchanted Settings', iconType: 'settings' },
 ]
 
-function Icon({ type }) {
+function Icon({ type, accent }) {
   return (
-    <span className="mr-4 inline-flex h-10 w-10 items-center justify-center rounded-3xl bg-white/5 text-slate-200 transition duration-200 group-hover:bg-violet-500/15 group-active:bg-violet-500/15">
+    <span
+      className="mr-4 inline-flex h-10 w-10 items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-slate-200 transition duration-200"
+      style={{ boxShadow: `0 0 20px ${accent}18` }}
+    >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         {type === 'home' && <path d="M3 11.25 12 3l9 8.25v8.25a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 19.5V11.25Z" />}
         {type === 'meal' && (
@@ -72,12 +75,13 @@ function Icon({ type }) {
 }
 
 export default function Sidebar() {
-  const { streak, totalCalories, completion } = useAppContext()
+  const { streak, totalCalories, completion, selectedHouse, gamification, currentTheme } = useAppContext()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const accent = selectedHouse?.colors?.[0] || currentTheme.colors[0]
 
   return (
     <aside
-      className={`hidden xl:flex xl:flex-col xl:overflow-hidden xl:border-r xl:border-white/10 xl:bg-slate-950/90 xl:px-6 xl:py-8 ${
+      className={`hidden xl:flex xl:flex-col xl:overflow-hidden xl:border-r xl:border-white/10 xl:bg-slate-950/88 xl:px-6 xl:py-8 ${
         isCollapsed ? 'xl:w-[108px]' : 'xl:w-[340px]'
       } transition-all duration-300`}
     >
@@ -87,24 +91,27 @@ export default function Sidebar() {
         transition={{ duration: 0.45 }}
         className="flex flex-col gap-8"
       >
-        <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
+        <div
+          className="rounded-[32px] border border-white/10 p-6 shadow-glass backdrop-blur-xl"
+          style={{ background: selectedHouse?.banner || 'rgba(15,23,42,0.85)' }}
+        >
           <div className="flex items-center justify-between gap-4">
             <div className={isCollapsed ? 'hidden' : ''}>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Nutrify Pro</p>
-              <h1 className="mt-3 text-2xl font-semibold text-white">Health HQ</h1>
+              <p className="text-sm uppercase tracking-[0.3em] text-white/70">Nutrify Academy</p>
+              <h1 className="mt-3 text-2xl font-semibold text-white">{selectedHouse ? selectedHouse.name : 'Academy House'}</h1>
             </div>
             <button
               type="button"
               onClick={() => setIsCollapsed((value) => !value)}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-white/5 text-slate-200 transition hover:bg-white/10"
+              className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-white/10 bg-white/10 text-slate-100 transition hover:bg-white/15"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <span className="text-lg">{isCollapsed ? '▸' : '◀'}</span>
+              <span className="text-lg">{isCollapsed ? '>' : '<'}</span>
             </button>
           </div>
           {!isCollapsed && (
-            <p className="mt-5 text-sm leading-6 text-slate-400">
-              Premium nutrition performance, custom meals, and effortless tracking in a refined wellness workspace.
+            <p className="mt-5 text-sm leading-6 text-white/80">
+              Rank: {gamification.rank?.label || 'Muggle'} / House path shaped by ritual, focus, and enchanted nutrition mastery.
             </p>
           )}
         </div>
@@ -119,12 +126,15 @@ export default function Sidebar() {
                 className={({ isActive }) =>
                   `group flex items-center rounded-3xl px-4 py-4 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-violet-500/15 to-cyan-500/10 text-white shadow-[inset_0_0_0_1px_rgba(139,92,246,0.22)]'
+                      ? 'text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]'
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`
                 }
+                style={({ isActive }) =>
+                  isActive ? { background: `linear-gradient(90deg, ${accent}26, rgba(255,255,255,0.04))` } : undefined
+                }
               >
-                <Icon type={item.iconType} />
+                <Icon type={item.iconType} accent={accent} />
                 <span className={isCollapsed ? 'hidden' : ''}>{item.label}</span>
               </NavLink>
             ))}
@@ -134,21 +144,21 @@ export default function Sidebar() {
         <div className="rounded-[32px] border border-white/10 bg-slate-900/85 p-6 shadow-glass backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
             <div className={isCollapsed ? 'hidden' : ''}>
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Current streak</p>
+              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Academy streak</p>
               <h2 className="mt-3 text-3xl font-semibold text-white">{streak} days</h2>
             </div>
-            <div className="rounded-3xl bg-slate-950/75 px-4 py-3 text-sm text-cyan-200">Live</div>
+            <div className="rounded-3xl bg-slate-950/75 px-4 py-3 text-sm text-slate-100">{gamification.rank?.glyph || '✦'}</div>
           </div>
           {!isCollapsed && (
             <>
-              <p className="mt-4 text-sm leading-6 text-slate-400">Consistency is the premium habit that powers long-term progress.</p>
+              <p className="mt-4 text-sm leading-6 text-slate-400">Each consistent day strengthens your house standing and magical rank progression.</p>
               <div className="mt-6 grid gap-3">
                 <div className="flex items-center justify-between rounded-3xl bg-white/5 p-4">
-                  <span className="text-sm text-slate-400">Calories completion</span>
+                  <span className="text-sm text-slate-400">Potion accuracy</span>
                   <span className="text-sm font-semibold text-white">{completion}%</span>
                 </div>
-                <div className="rounded-3xl bg-gradient-to-r from-violet-500/10 to-cyan-500/10 p-4">
-                  <p className="text-sm text-slate-400">Today</p>
+                <div className="rounded-3xl p-4" style={{ background: `linear-gradient(90deg, ${accent}20, rgba(255,255,255,0.04))` }}>
+                  <p className="text-sm text-slate-400">Daily energy</p>
                   <p className="mt-2 text-2xl font-semibold text-white">{totalCalories} kcal</p>
                 </div>
               </div>
@@ -168,7 +178,7 @@ export default function Sidebar() {
                   }`
                 }
               >
-                <Icon type={item.iconType} />
+                <Icon type={item.iconType} accent={accent} />
                 <span className={isCollapsed ? 'hidden' : ''}>{item.label}</span>
               </NavLink>
             ))}

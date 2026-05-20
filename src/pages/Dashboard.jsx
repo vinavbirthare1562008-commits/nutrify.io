@@ -10,6 +10,7 @@ import HealthScoreCard from '../components/HealthScoreCard.jsx'
 import AchievementCard from '../components/AchievementCard.jsx'
 import AIInsightsPanel from '../components/AIInsightsPanel.jsx'
 import DailyChallengesPanel from '../components/DailyChallengesPanel.jsx'
+import AcademyStatusCard from '../components/AcademyStatusCard.jsx'
 
 const cardClass = 'rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.92))] p-6 shadow-glass'
 
@@ -50,6 +51,8 @@ export default function Dashboard() {
     currentTheme,
     weeklyHealthTimeline,
     healthTrendDelta,
+    selectedHouse,
+    magicalMealTypes,
   } = useAppContext()
   const [previewFood, setPreviewFood] = useState(null)
 
@@ -65,10 +68,11 @@ export default function Dashboard() {
   )
 
   const topMicronutrients = micronutrientCards.slice(0, 6)
+  const mealLabelMap = Object.fromEntries(magicalMealTypes.map((item) => [item.key, item.label]))
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.85fr_0.95fr]">
         <div className="relative overflow-hidden rounded-[40px] border border-white/10 bg-[linear-gradient(145deg,rgba(15,23,42,0.96),rgba(2,6,23,0.92))] p-6 shadow-glass">
           <div
             className="absolute inset-0 opacity-80"
@@ -91,7 +95,7 @@ export default function Dashboard() {
           <div className="relative">
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
-                AI-powered dashboard
+                Enchanted academy dashboard
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
                 Health trend {healthTrendDelta >= 0 ? '+' : ''}{healthTrendDelta}
@@ -102,40 +106,41 @@ export default function Dashboard() {
               {personalizedGreeting.greeting}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-              {personalizedGreeting.message} Your platform is tracking nutrients, recovery, streaks, and actions in one polished ecosystem.
+              {personalizedGreeting.message} Your academy is tracking potions, rituals, ranks, and enchanted actions in one polished ecosystem.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard title="Health score" value={dailyHealth.score} accent="bg-emerald-500/15 text-emerald-100">
+              <StatCard title="Academy score" value={dailyHealth.score} accent="bg-emerald-500/15 text-emerald-100">
                 {dailyHealth.grade}
               </StatCard>
-              <StatCard title="Hydration" value={`${Math.round((waterIntake / Math.max(1, macroTargets.water)) * 100)}%`} accent="bg-cyan-500/15 text-cyan-100">
+              <StatCard title="Hydration charm" value={`${Math.round((waterIntake / Math.max(1, macroTargets.water)) * 100)}%`} accent="bg-cyan-500/15 text-cyan-100">
                 {waterIntake.toFixed(1)}L
               </StatCard>
-              <StatCard title="Nutrition quality" value={nutritionQualityIndex.quality} accent="bg-violet-500/15 text-violet-100">
+              <StatCard title="Potion quality" value={nutritionQualityIndex.quality} accent="bg-violet-500/15 text-violet-100">
                 {nutritionQualityIndex.healthyRating}
               </StatCard>
-              <StatCard title="XP level" value={gamification.level} accent="bg-amber-500/15 text-amber-100">
+              <StatCard title="Academy XP" value={gamification.rank?.label || gamification.level} accent="bg-amber-500/15 text-amber-100">
                 {gamification.xp} XP
               </StatCard>
             </div>
           </div>
         </div>
 
+        <AcademyStatusCard house={selectedHouse} gamification={gamification} />
         <HealthScoreCard health={dailyHealth} gamification={gamification} />
       </section>
 
       <section className={cardClass}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Personalized dashboard</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Adaptive nutrition control surface</h2>
+            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Academy dashboard</p>
+            <h2 className="mt-3 text-3xl font-semibold text-white">Arcane nutrition control surface</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">
-              Live widgets track your calories, macros, hydration, and goal progress with startup-grade polish and motion.
+              Live widgets track your calories, macros, hydration charms, and ritual progress with magical polish and motion.
             </p>
           </div>
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
-            {dailyMeals.length} logs today / {caloriesRemaining} kcal remaining
+            {dailyMeals.length} rituals today / {caloriesRemaining} kcal remaining
           </div>
         </div>
 
@@ -143,7 +148,7 @@ export default function Dashboard() {
           {nutritionRings.map((ring) => (
             <ProgressCircle
               key={ring.key}
-              label={ring.label}
+                label={ring.label === 'Water' ? 'Hydration Charm' : ring.label}
               value={ring.value}
               goal={ring.goal}
               unit={ring.unit}
@@ -170,8 +175,8 @@ export default function Dashboard() {
           <div className={cardClass}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Premium chart system</p>
-                <h2 className="mt-3 text-2xl font-semibold text-white">Weekly energy and health arc</h2>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Rune chart system</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Weekly energy and academy arc</h2>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
                 Dual trend
@@ -199,7 +204,7 @@ export default function Dashboard() {
           </div>
 
           <div className={cardClass}>
-            <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Recommended actions</p>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Wizard recommendations</p>
             <div className="mt-5 grid gap-3">
               {dailyHealth.recommendations.map((item) => (
                 <div key={item.title} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
@@ -216,8 +221,8 @@ export default function Dashboard() {
         <div className={cardClass}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Micronutrient tracking</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">Advanced nutrient coverage</h2>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Arcane nutrient tracking</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Enchanted nutrient coverage</h2>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
               11 nutrients
@@ -257,8 +262,8 @@ export default function Dashboard() {
         <div className={cardClass}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Recent logs</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">Today's food timeline</h2>
+              <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Recent rituals</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Today's potion timeline</h2>
             </div>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
               {dailyMeals.length} items
@@ -277,7 +282,7 @@ export default function Dashboard() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-base font-semibold text-white">{meal.name}</p>
-                      <p className="mt-2 text-sm text-slate-400">{meal.foodCategory} / {meal.serving}</p>
+                      <p className="mt-2 text-sm text-slate-400">{mealLabelMap[meal.mealType] || meal.foodCategory} / {meal.serving}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs text-violet-100">{meal.calories} kcal</span>
@@ -289,7 +294,7 @@ export default function Dashboard() {
             ) : (
               <div className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-10 text-center text-slate-400">
                 <p className="text-lg font-semibold text-white">No meals logged yet</p>
-                <p className="mt-3 text-sm">Search a food and start building today's health score.</p>
+                <p className="mt-3 text-sm">Search an ingredient and begin today's academy score.</p>
               </div>
             )}
           </div>
@@ -300,7 +305,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.34em] text-slate-500">Achievement vault</p>
-            <h2 className="mt-3 text-2xl font-semibold text-white">Unlocked momentum system</h2>
+            <h2 className="mt-3 text-2xl font-semibold text-white">Unlocked magical progression</h2>
           </div>
           <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
             Level {gamification.level}

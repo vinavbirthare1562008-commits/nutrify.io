@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useAppContext } from '../context/AppContext.jsx'
 
 export default function Profile() {
-  const { healthProfile, personalizedGreeting, currentTheme, gamification, dailyHealth } = useAppContext()
+  const { healthProfile, personalizedGreeting, currentTheme, gamification, dailyHealth, selectedHouse } = useAppContext()
 
   return (
     <div className="space-y-8">
@@ -33,6 +33,7 @@ export default function Profile() {
             <div>
               <p className="text-3xl font-semibold text-white">{healthProfile.name}</p>
               <p className="mt-2 text-sm text-slate-400">Goal: {healthProfile.fitnessGoal} / Activity: {healthProfile.activityLevel}</p>
+              {selectedHouse ? <p className="mt-2 text-sm text-slate-400">House: {selectedHouse.name} / {selectedHouse.emblem}</p> : null}
             </div>
             <div className="rounded-[28px] bg-slate-950/75 px-5 py-4 shadow-glass">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Health score</p>

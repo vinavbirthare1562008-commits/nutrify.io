@@ -12,6 +12,10 @@ import Sidebar from './components/Sidebar.jsx'
 import Navbar from './components/Navbar.jsx'
 import MobileNav from './components/MobileNav.jsx'
 import FloatingQuickActions from './components/FloatingQuickActions.jsx'
+import MagicalParticles from './components/MagicalParticles.jsx'
+import RewardFeed from './components/RewardFeed.jsx'
+import HouseSelectionModal from './components/HouseSelectionModal.jsx'
+import RankAscensionModal from './components/RankAscensionModal.jsx'
 import { useAppContext } from './context/AppContext.jsx'
 
 function ContentWrapper({ children }) {
@@ -34,11 +38,12 @@ function ContentWrapper({ children }) {
 }
 
 function AppShell() {
-  const { currentTheme } = useAppContext()
+  const { currentTheme, selectedHouse, academyHouses, selectHouse, rewardFeed, levelUpEvent, dismissLevelUpEvent } = useAppContext()
 
   return (
     <div className="min-h-screen text-slate-100 transition-colors duration-500" style={{ background: currentTheme.background }}>
       <div className="absolute inset-0 bg-dashboard-glow opacity-60" />
+      <MagicalParticles colors={selectedHouse?.colors || currentTheme.colors} />
       <div className="relative flex min-h-screen flex-col xl:flex-row">
         <Sidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-28 pt-6 md:px-6 xl:px-8">
@@ -60,6 +65,9 @@ function AppShell() {
       </div>
       <MobileNav />
       <FloatingQuickActions />
+      <RewardFeed rewards={rewardFeed} />
+      <HouseSelectionModal open={!selectedHouse} houses={academyHouses} onSelect={selectHouse} />
+      <RankAscensionModal event={levelUpEvent} onClose={dismissLevelUpEvent} />
     </div>
   )
 }
